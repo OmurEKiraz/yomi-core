@@ -35,32 +35,32 @@ pip install -r requirements.txt
 📖 Usage
 1. 🔍 Search for Manga
 Find the exact URL for your series using the massive Manganato database.
-python -m yomi.cli search "solo leveling"
+# python -m yomi.cli search "solo leveling"
 
 2. ⬇️ Download
 The classic command. Downloads images into folders by default.
-python -m yomi.cli download -u "URL_HERE"
+### python -m yomi.cli download -u "URL_HERE"
 
 
 3. 📦 Download as PDF or CBZ
 Auto-convert chapters into single files.
-python -m yomi.cli download -u "URL_HERE" -f pdf
-python -m yomi.cli download -u "URL_HERE" -f cbz
+### python -m yomi.cli download -u "URL_HERE" -f pdf
+### python -m yomi.cli download -u "URL_HERE" -f cbz
 
 
 4. 🎯 Download Specific Chapters
 Only want chapters 10 through 20?
-python -m yomi.cli download -u "URL_HERE" -r "10-20"
+### python -m yomi.cli download -u "URL_HERE" -r "10-20"
 
 
 5. ⚡ Turbo Mode (Workers)
 Increase threads for faster downloads (Default: 8).
-python -m yomi.cli download -u "URL_HERE" -w 16
+### python -m yomi.cli download -u "URL_HERE" -w 16
 
 
 6. 🛡️ Use a Proxy
 Bypass IP bans or geoblocks.
-python -m yomi.cli download -u "URL_HERE" -p "[http://user:pass@1.2.3.4:8080](http://user:pass@1.2.3.4:8080)"
+### python -m yomi.cli download -u "URL_HERE" -p "[http://user:pass@1.2.3.4:8080](http://user:pass@1.2.3.4:8080)"
 
 
 🧩 Supported Sites
