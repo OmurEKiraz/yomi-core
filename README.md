@@ -35,12 +35,12 @@ git clone [https://github.com/OmurEKiraz/yomi.git](https://github.com/OmurEKiraz
 cd yomi
 
 # 2. Create a virtual environment (Recommended)
-python -m venv venv
-# Windows: .\venv\Scripts\activate
-# Linux/Mac: source venv/bin/activate
+##### python -m venv venv
+##### Windows: .\venv\Scripts\activate
+##### Linux/Mac: source venv/bin/activate
 
 # 3. Install requirements
-pip install -r requirements.txt
+##### pip install -r requirements.txt
 
 
 # 📖 Command Cheat Sheet
