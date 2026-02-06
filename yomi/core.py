@@ -2,14 +2,14 @@ import os
 import logging
 import shutil
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+import aiohttp
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn
 from rich.logging import RichHandler
 
-from .extractors.common import GenericMangaExtractor
+# Import Async Extractor
+from .extractors.common import AsyncGenericMangaExtractor
 from .database import YomiDB
-
-# 🔥 YENİ MODÜLLERDEN İMPORT
 from .utils.archive import create_cbz_archive, create_pdf_document
 from .utils.metadata import parse_chapter_metadata
 
@@ -24,20 +24,20 @@ logging.basicConfig(
 logger = logging.getLogger("YomiCore")
 
 class YomiCore:
-    def __init__(self, output_dir: str = "downloads", workers: int = 4, debug: bool = False, format: str = "folder", proxy: str = None):
+    def __init__(self, output_dir: str = "downloads", workers: int = 8, debug: bool = False, format: str = "folder", proxy: str = None):
         self.output_dir = output_dir
-        self.workers = workers
+        self.workers = workers # Now represents concurrent async tasks
         self.format = format.lower()
         self.debug = debug
+        self.proxy = proxy
         
         if self.debug:
             logger.setLevel(logging.DEBUG)
-            logger.debug("[bold red]DEBUG MODE ON[/]")
+            logger.debug("[bold red]DEBUG MODE ON: Async Engine Active[/]")
         else:
             logger.setLevel(logging.ERROR)
         
         os.makedirs(self.output_dir, exist_ok=True)
-        self.extractor = GenericMangaExtractor(proxy=proxy)
         self.db = YomiDB(os.path.join(output_dir, "history.db"))
         self.sites_config = self._load_sites_config()
 
@@ -52,6 +52,8 @@ class YomiCore:
         return {}
 
     def _resolve_target(self, input_str: str):
+        # ... (Same logic as before, just keeps it sync for simplicity or can be made async) ...
+        # For simplicity, keeping this part synchronous as it's just string matching
         if input_str.startswith("http"): return input_str
         if input_str in self.sites_config:
             site_data = self.sites_config[input_str]
@@ -72,12 +74,20 @@ class YomiCore:
         return input_str
 
     def download_manga(self, target: str, chapter_range: str = None):
-        try:
-            url = self._resolve_target(target)
-            if not url: return
+        # Entry point: Starts the Async Event Loop
+        asyncio.run(self._download_manga_async(target, chapter_range))
+
+    async def _download_manga_async(self, target: str, chapter_range: str):
+        url = self._resolve_target(target)
+        if not url: return
+
+        # Configure connection pool
+        connector = aiohttp.TCPConnector(limit=self.workers)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            extractor = AsyncGenericMangaExtractor(session)
 
             print(f"🔍 Analyzing: {url}...")
-            manga_info = self.extractor.get_manga_info(url)
+            manga_info = await extractor.get_manga_info(url)
             manga_title = manga_info['title']
             
             safe_title = "".join([c for c in manga_title if c.isalnum() or c in (' ', '-', '_')]).strip()
@@ -85,7 +95,7 @@ class YomiCore:
             os.makedirs(manga_path, exist_ok=True)
             
             print(f"📘 Target: {manga_title}")
-            all_chapters = self.extractor.get_chapters(url)
+            all_chapters = await extractor.get_chapters(url)
             chapters = self._filter_chapters(all_chapters, chapter_range)
             
             if not chapters:
@@ -102,21 +112,22 @@ class YomiCore:
                 TimeRemainingColumn(),
             ) as progress:
                 task = progress.add_task(f"[green]Downloading {manga_title}", total=len(chapters))
-
+                
+                # Semaphore to limit concurrent CHAPTER downloads if needed, 
+                # but usually we limit IMAGE downloads.
+                # Let's process chapters sequentially (to be polite) or in small batches.
+                # For maximum speed, we can process images in parallel.
+                
                 for chapter in chapters:
                     if self.db.is_completed(manga_title, chapter['title']):
                         progress.console.print(f"[dim]Skipping {chapter['title']} (Already Downloaded)[/dim]")
                         progress.advance(task)
                         continue
 
-                    self._download_single_chapter(chapter, manga_path, manga_title, progress)
+                    await self._download_single_chapter(extractor, chapter, manga_path, manga_title, progress)
                     progress.advance(task)
 
-        except Exception as e:
-            print(f"❌ Critical Error: {e}")
-            if self.debug: logger.exception("Traceback:")
-        finally:
-            self.db.close()
+        self.db.close()
 
     def _filter_chapters(self, chapters, range_str):
         if not range_str: return chapters
@@ -132,45 +143,49 @@ class YomiCore:
         except:
             return chapters
 
-    def _download_single_chapter(self, chapter, parent_path, manga_title, progress):
-        # 🔥 MODÜLER GÜÇ: Metadata analizi artık tek satır!
+    async def _download_single_chapter(self, extractor, chapter, parent_path, manga_title, progress):
         meta = parse_chapter_metadata(chapter['title'], manga_title, chapter['url'])
-        
         clean_title = "".join([c for c in chapter['title'] if c.isalnum() or c in (' ', '-', '_')]).strip()
         chapter_folder = os.path.join(parent_path, clean_title)
         os.makedirs(chapter_folder, exist_ok=True)
 
         try:
-            pages = self.extractor.get_pages(chapter['url'])
+            pages = await extractor.get_pages(chapter['url'])
             if not pages:
                 if self.debug: logger.warning(f"⚠️  No pages found for {chapter['title']}")
                 return
 
-            with ThreadPoolExecutor(max_workers=self.workers) as executor:
-                futures = []
-                for idx, img_url in enumerate(pages):
-                    ext = "jpg"
-                    if ".png" in img_url.lower(): ext = "png"
-                    elif ".webp" in img_url.lower(): ext = "webp"
-                    
-                    fname = f"{idx+1:03d}.{ext}"
-                    save_path = os.path.join(chapter_folder, fname)
-                    futures.append(executor.submit(self.extractor.download_image, img_url, save_path, chapter['url']))
+            # Async Download of Images
+            tasks = []
+            for idx, img_url in enumerate(pages):
+                ext = "jpg"
+                if ".png" in img_url.lower(): ext = "png"
+                elif ".webp" in img_url.lower(): ext = "webp"
+                
+                fname = f"{idx+1:03d}.{ext}"
+                save_path = os.path.join(chapter_folder, fname)
+                tasks.append(extractor.download_image(img_url, save_path))
+            
+            # Run all image downloads concurrently
+            await asyncio.gather(*tasks)
 
-                for f in as_completed(futures): f.result()
-
-            # 🔥 MODÜLER GÜÇ: Arşivleme işlemleri utils'ten çağrılıyor
+            # Archiving (CPU Bound - Sync Operation)
+            # Running this in a thread to not block the event loop is better practice,
+            # but for simplicity, we call it directly here. 
+            # (To optimize further: run_in_executor)
+            loop = asyncio.get_running_loop()
+            
             success = False
             if self.format == "pdf":
                 pdf_path = os.path.join(parent_path, f"{clean_title}.pdf")
-                if create_pdf_document(chapter_folder, pdf_path):
+                # Offload to thread
+                if await loop.run_in_executor(None, create_pdf_document, chapter_folder, pdf_path):
                     shutil.rmtree(chapter_folder)
                     success = True
             
             elif self.format == "cbz":
                 cbz_path = os.path.join(parent_path, f"{clean_title}.cbz")
-                # Metadata'yı buraya paslıyoruz
-                if create_cbz_archive(chapter_folder, cbz_path, metadata=meta):
+                if await loop.run_in_executor(None, create_cbz_archive, chapter_folder, cbz_path, meta):
                     shutil.rmtree(chapter_folder)
                     success = True
             else:
@@ -182,3 +197,4 @@ class YomiCore:
 
         except Exception as e:
             progress.console.print(f"[red]Failed {chapter['title']}: {e}[/red]")
+            if self.debug: logger.exception("Traceback")

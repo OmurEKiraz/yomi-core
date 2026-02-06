@@ -1,8 +1,9 @@
 click
-requests
-curl_cffi
+requests      
+aiohttp        
+aiofiles       
 beautifulsoup4
-lxml         
+lxml
 rich
 pillow
 img2pdf
