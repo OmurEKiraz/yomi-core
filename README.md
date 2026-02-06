@@ -54,7 +54,7 @@ Downloads and converts chapters into single files
 .CBZ: Includes metadata (Best for Komga/Kavita)
 .PDF: Best for phone/tablet reading.
 ##### python -m yomi.cli download -u "URL_HERE" -f cbz
-# or
+#### or
 ##### python -m yomi.cli download -u "URL_HERE" -f pdf
 # 🎯 Range Selection
 Download specific chapters, ranges, or fill missing gaps.
