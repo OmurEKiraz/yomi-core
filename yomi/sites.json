@@ -803,5 +803,264 @@
     "base_domain": "lonerlifeinanotherworld.com",
     "test_path": "/manga/lonerlifeinanotherworld-chapter-1",
     "url_pattern": "{mirror}/manga/lonerlifeinanotherworld-chapter-{chapter}"
+  },
+  "reincarnated-as-a-sword": {
+    "name": "Reincarnated As A Sword",
+    "type": "dynamic",
+    "base_domain": "reincarnatedasasword.com",
+    "test_path": "/manga/reincarnatedasasword-chapter-1",
+    "url_pattern": "{mirror}/manga/reincarnatedasasword-chapter-{chapter}"
+  },
+  "dungeon-odyssey": {
+    "name": "Dungeon Odyssey",
+    "type": "dynamic",
+    "base_domain": "dungeonodyssey.com",
+    "test_path": "/manga/dungeonodyssey-chapter-1",
+    "url_pattern": "{mirror}/manga/dungeonodyssey-chapter-{chapter}"
+  },
+  "i-want-to-end-this-love-game": {
+    "name": "I Want To End This Love Game",
+    "type": "dynamic",
+    "base_domain": "readiwanttoendthislovegame.com",
+    "test_path": "/manga/iwanttoendthislovegame-chapter-1",
+    "url_pattern": "{mirror}/manga/iwanttoendthislovegame-chapter-{chapter}"
+  },
+  "aishiteru-game-wo-owarasetai": {
+    "name": "Aishiteru Game Wo Owarasetai",
+    "type": "dynamic",
+    "base_domain": "aishiterugamewoowarasetai.com",
+    "test_path": "/manga/aishiterugamewoowarasetai-chapter-1",
+    "url_pattern": "{mirror}/manga/aishiterugamewoowarasetai-chapter-{chapter}"
+  },
+  "you-and-i-are-polar-opposites": {
+    "name": "You And I Are Polar Opposites",
+    "type": "dynamic",
+    "base_domain": "readyouandiarepolaropposites.com",
+    "test_path": "/manga/youandiarepolaropposites-chapter-1",
+    "url_pattern": "{mirror}/manga/youandiarepolaropposites-chapter-{chapter}"
+  },
+  "the-hero-returns": {
+    "name": "The Hero Returns",
+    "type": "dynamic",
+    "base_domain": "theheroreturns.com",
+    "test_path": "/manga/theheroreturns-chapter-1",
+    "url_pattern": "{mirror}/manga/theheroreturns-chapter-{chapter}"
+  },
+  "kindergarten-wars": {
+    "name": "Kindergarten Wars",
+    "type": "dynamic",
+    "base_domain": "kindergartenwars.com",
+    "test_path": "/manga/kindergartenwars-chapter-1",
+    "url_pattern": "{mirror}/manga/kindergartenwars-chapter-{chapter}"
+  },
+  "jujutsu-kaisen-modulo": {
+    "name": "Jujutsu Kaisen Modulo",
+    "type": "dynamic",
+    "base_domain": "jujutsukaisenmodulo.org",
+    "test_path": "/manga/jujutsukaisenmodulo-chapter-1",
+    "url_pattern": "{mirror}/manga/jujutsukaisenmodulo-chapter-{chapter}"
+  },
+  "i-am-the-fated-villain": {
+    "name": "I Am The Fated Villain",
+    "type": "dynamic",
+    "base_domain": "iamthefatedvillain.com",
+    "test_path": "/manga/iamthefatedvillain-chapter-1",
+    "url_pattern": "{mirror}/manga/iamthefatedvillain-chapter-{chapter}"
+  },
+  "mayonaka-heart-tune": {
+    "name": "Mayonaka Heart Tune",
+    "type": "dynamic",
+    "base_domain": "mayonakahearttune.com",
+    "test_path": "/manga/mayonakahearttune-chapter-1",
+    "url_pattern": "{mirror}/manga/mayonakahearttune-chapter-{chapter}"
+  },
+  "is-this-hero-for-real": {
+    "name": "Is This Hero For Real",
+    "type": "dynamic",
+    "base_domain": "r1.isthisheroforreal.com",
+    "test_path": "/manga/isthisheroforreal-chapter-1",
+    "url_pattern": "{mirror}/manga/isthisheroforreal-chapter-{chapter}"
+  },
+  "a-business-proposal": {
+    "name": "A Business Proposal",
+    "type": "dynamic",
+    "base_domain": "abp.org",
+    "test_path": "/manga/abp-chapter-1",
+    "url_pattern": "{mirror}/manga/abp-chapter-{chapter}"
+  },
+  "the-death-mage": {
+    "name": "The Death Mage",
+    "type": "dynamic",
+    "base_domain": "thedeathmage.com",
+    "test_path": "/manga/thedeathmage-chapter-1",
+    "url_pattern": "{mirror}/manga/thedeathmage-chapter-{chapter}"
+  },
+  "daemons-of-the-shadow-realm": {
+    "name": "Daemons Of The Shadow Realm",
+    "type": "dynamic",
+    "base_domain": "daemonsoftheshadowrealm.com",
+    "test_path": "/manga/daemonsoftheshadowrealm-chapter-1",
+    "url_pattern": "{mirror}/manga/daemonsoftheshadowrealm-chapter-{chapter}"
+  },
+  "honey-lemon-soda": {
+    "name": "Honey Lemon Soda",
+    "type": "dynamic",
+    "base_domain": "honeylemonsoda.xyz",
+    "test_path": "/manga/honeylemonsoda-chapter-1",
+    "url_pattern": "{mirror}/manga/honeylemonsoda-chapter-{chapter}"
+  },
+  "black-cat": {
+    "name": "Black Cat",
+    "type": "dynamic",
+    "base_domain": "bc-manga.com",
+    "test_path": "/manga/bc-chapter-1",
+    "url_pattern": "{mirror}/manga/bc-chapter-{chapter}"
+  },
+  "no-longer-allowed-in-another-world": {
+    "name": "No Longer Allowed In Another World",
+    "type": "dynamic",
+    "base_domain": "nolongerallowedinanotherworld.com",
+    "test_path": "/manga/nolongerallowedinanotherworld-chapter-1",
+    "url_pattern": "{mirror}/manga/nolongerallowedinanotherworld-chapter-{chapter}"
+  },
+  "gals-cant-be-kind-to-otaku": {
+    "name": "Gals Cant Be Kind To Otaku",
+    "type": "dynamic",
+    "base_domain": "galscantbekindtootaku.com",
+    "test_path": "/manga/galscantbekindtootaku-chapter-1",
+    "url_pattern": "{mirror}/manga/galscantbekindtootaku-chapter-{chapter}"
+  },
+  "nebulas-civilization": {
+    "name": "Nebulas Civilization",
+    "type": "dynamic",
+    "base_domain": "thenebulascivilization.com",
+    "test_path": "/manga/nebulascivilization-chapter-1",
+    "url_pattern": "{mirror}/manga/nebulascivilization-chapter-{chapter}"
+  },
+  "tsuyokute-new-saga": {
+    "name": "Tsuyokute New Saga",
+    "type": "dynamic",
+    "base_domain": "tsuyokutenewsaga.com",
+    "test_path": "/manga/tsuyokutenewsaga-chapter-1",
+    "url_pattern": "{mirror}/manga/tsuyokutenewsaga-chapter-{chapter}"
+  },
+  "soul-land": {
+    "name": "Soul Land",
+    "type": "dynamic",
+    "base_domain": "readsoulland.com",
+    "test_path": "/manga/soulland-chapter-1",
+    "url_pattern": "{mirror}/manga/soulland-chapter-{chapter}"
+  },
+  "the-kingdoms-of-ruin": {
+    "name": "The Kingdoms Of Ruin",
+    "type": "dynamic",
+    "base_domain": "thekingdomsofruin.com",
+    "test_path": "/manga/thekingdomsofruin-chapter-1",
+    "url_pattern": "{mirror}/manga/thekingdomsofruin-chapter-{chapter}"
+  },
+  "survival-in-another-world-with-my-mistress": {
+    "name": "Survival In Another World With My Mistress",
+    "type": "dynamic",
+    "base_domain": "survival.com",
+    "test_path": "/manga/survival-chapter-1",
+    "url_pattern": "{mirror}/manga/survival-chapter-{chapter}"
+  },
+  "vagabond-saigo-no-manga-ten": {
+    "name": "Vagabond Saigo No Manga Ten",
+    "type": "dynamic",
+    "base_domain": "readvagabond.com",
+    "test_path": "/manga/vagabond-chapter-1",
+    "url_pattern": "{mirror}/manga/vagabond-chapter-{chapter}"
+  },
+  "seirei-gensouki": {
+    "name": "Seirei Gensouki",
+    "type": "dynamic",
+    "base_domain": "seireigensouki.net",
+    "test_path": "/manga/seireigensouki-chapter-1",
+    "url_pattern": "{mirror}/manga/seireigensouki-chapter-{chapter}"
+  },
+  "reverend-insanity": {
+    "name": "Reverend Insanity",
+    "type": "dynamic",
+    "base_domain": "readreverendinsanity.com",
+    "test_path": "/manga/reverendinsanity-chapter-1",
+    "url_pattern": "{mirror}/manga/reverendinsanity-chapter-{chapter}"
+  },
+  "the-strongest-evolutionary-necromancer": {
+    "name": "The Strongest Evolutionary Necromancer",
+    "type": "dynamic",
+    "base_domain": "thestrongestevolutionarynecromancer.com",
+    "test_path": "/manga/thestrongestevolutionarynecromancer-chapter-1",
+    "url_pattern": "{mirror}/manga/thestrongestevolutionarynecromancer-chapter-{chapter}"
+  },
+  "the-game-that-i-came-from": {
+    "name": "The Game That I Came From",
+    "type": "dynamic",
+    "base_domain": "thegamethaticamefrom.com",
+    "test_path": "/manga/thegamethaticamefrom-chapter-1",
+    "url_pattern": "{mirror}/manga/thegamethaticamefrom-chapter-{chapter}"
+  },
+  "berserk-the-prototype": {
+    "name": "Berserk The Prototype",
+    "type": "dynamic",
+    "base_domain": "berserk-manga.com",
+    "test_path": "/manga/berserk-chapter-1",
+    "url_pattern": "{mirror}/manga/berserk-chapter-{chapter}"
+  },
+  "to-not-die": {
+    "name": "To Not Die",
+    "type": "dynamic",
+    "base_domain": "tonotdie.com",
+    "test_path": "/manga/tonotdie-chapter-1",
+    "url_pattern": "{mirror}/manga/tonotdie-chapter-{chapter}"
+  },
+  "bad-company": {
+    "name": "Bad Company",
+    "type": "dynamic",
+    "base_domain": "bc-manga.com",
+    "test_path": "/manga/bc-chapter-1",
+    "url_pattern": "{mirror}/manga/bc-chapter-{chapter}"
+  },
+  "uma-musume-cinderella-gray": {
+    "name": "Uma Musume Cinderella Gray",
+    "type": "dynamic",
+    "base_domain": "umamusumecinderellagray.com",
+    "test_path": "/manga/umamusumecinderellagray-chapter-1",
+    "url_pattern": "{mirror}/manga/umamusumecinderellagray-chapter-{chapter}"
+  },
+  "berserk-shinen-no-kami-2": {
+    "name": "Berserk Shinen No Kami 2",
+    "type": "dynamic",
+    "base_domain": "berserk-manga.com",
+    "test_path": "/manga/berserk-chapter-1",
+    "url_pattern": "{mirror}/manga/berserk-chapter-{chapter}"
+  },
+  "danganronpa-kibou-no-gakuen-to-zetsubou-no-koukousei-the-animation": {
+    "name": "Danganronpa Kibou No Gakuen To Zetsubou No Koukousei The Animation",
+    "type": "dynamic",
+    "base_domain": "danganronpa-manga.com",
+    "test_path": "/manga/danganronpa-chapter-1",
+    "url_pattern": "{mirror}/manga/danganronpa-chapter-{chapter}"
+  },
+  "danganronpa-the-animation": {
+    "name": "Danganronpa The Animation",
+    "type": "dynamic",
+    "base_domain": "danganronpa-manga.com",
+    "test_path": "/manga/danganronpa-chapter-1",
+    "url_pattern": "{mirror}/manga/danganronpa-chapter-{chapter}"
+  },
+  "mawangui-ttallo-taeeonatseumnida": {
+    "name": "Mawangui Ttallo Taeeonatseumnida",
+    "type": "dynamic",
+    "base_domain": "mtt.org",
+    "test_path": "/manga/mtt-chapter-1",
+    "url_pattern": "{mirror}/manga/mtt-chapter-{chapter}"
+  },
+  "kakegurui-twin": {
+    "name": "Kakegurui Twin",
+    "type": "dynamic",
+    "base_domain": "readkakegurui.com",
+    "test_path": "/manga/kakegurui-chapter-1",
+    "url_pattern": "{mirror}/manga/kakegurui-chapter-{chapter}"
   }
 }
