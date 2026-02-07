@@ -56,14 +56,42 @@ class YomiCore:
         self.sites_config = self._load_sites_config()
 
     def _load_sites_config(self):
-        config_path = os.path.join(os.path.dirname(__file__), "sites.json")
-        if os.path.exists(config_path):
+        config = {}
+        base_dir = os.path.dirname(__file__)
+        
+        # 1. Önce Dev Topluluk Listesini Yükle (Varsa)
+        bulk_path = os.path.join(base_dir, "sites_bulk.json") # Botun oluşturacağı dosya
+        if os.path.exists(bulk_path):
             try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                with open(bulk_path, "r", encoding="utf-8") as f:
+                    bulk_data = json.load(f)
+                    config.update(bulk_data)
+                    if self.debug: print(f"📚 Loaded {len(bulk_data)} sites from Community DB.")
+            except Exception as e:
+                print(f"⚠️ Failed to load bulk sites: {e}")
+
+        # 2. Sonra Senin Test Listeni Yükle (Varsa)
+        test_path = os.path.join(base_dir, "sites_test.json")
+        if os.path.exists(test_path):
+             try:
+                with open(test_path, "r", encoding="utf-8") as f:
+                    test_data = json.load(f)
+                    config.update(test_data) # Üstüne yazar
+             except: pass
+
+        # 3. EN SON Senin "Elite" Listeni Yükle (sites.json)
+        # Bu en son yüklenir ki, senin elle yazdığın ayarlar diğerlerini ezsin (Override).
+        main_path = os.path.join(base_dir, "sites.json")
+        if os.path.exists(main_path):
+            try:
+                with open(main_path, "r", encoding="utf-8") as f:
+                    main_data = json.load(f)
+                    config.update(main_data)
+                    if self.debug: print(f"💎 Loaded {len(main_data)} Elite sites.")
             except:
-                return {}
-        return {}
+                pass
+                
+        return config
 
     async def _resolve_target(self, input_str: str):
         """
