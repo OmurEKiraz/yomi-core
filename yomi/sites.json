@@ -789,5 +789,19 @@
     "base_domain": "boruto-online.com",
     "test_path": "/manga/boruto-chapter-1",
     "url_pattern": "{mirror}/manga/boruto-chapter-{chapter}"
+  },
+  "descended-from-divinity": {
+    "name": "Descended From Divinity",
+    "type": "dynamic",
+    "base_domain": "descendedfromdivinity.com",
+    "test_path": "/manga/descendedfromdivinity-chapter-1",
+    "url_pattern": "{mirror}/manga/descendedfromdivinity-chapter-{chapter}"
+  },
+  "loner-life-in-another-world": {
+    "name": "Loner Life In Another World",
+    "type": "dynamic",
+    "base_domain": "lonerlifeinanotherworld.com",
+    "test_path": "/manga/lonerlifeinanotherworld-chapter-1",
+    "url_pattern": "{mirror}/manga/lonerlifeinanotherworld-chapter-{chapter}"
   }
 }
