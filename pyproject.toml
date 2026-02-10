@@ -38,7 +38,8 @@ dependencies = [
     "Pillow",
     "img2pdf",
     "fastapi",
-    "uvicorn"
+    "uvicorn",
+    "pydantic"
 ]
 
 [project.urls]

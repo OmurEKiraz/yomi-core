@@ -1,26 +1,113 @@
-import uvicorn
 import os
-import json
-import shutil
+import asyncio
 import aiohttp
-from datetime import datetime
+import logging
+from contextlib import asynccontextmanager
 from typing import List, Optional, Dict
+from datetime import datetime
+
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from difflib import SequenceMatcher
+from pydantic import BaseModel
 
-# Internal Package Imports
+# Yomi Core Imports
 from .core import YomiCore
-from .extractors.common import AsyncGenericMangaExtractor
+from .database import YomiDB
 from .utils.anilist import AniListProvider
 
+# --- 1. DATA MODELS (Pydantic) ---
+# Frontend'in ne beklemesi gerektiğini netleştiren şemalar
+class SearchResult(BaseModel):
+    slug: str
+    name: str
+    confidence: int
+    base_domain: str
+
+class ChapterInfo(BaseModel):
+    title: str
+    url: str
+    is_downloaded: bool = False
+
+class MangaDetails(BaseModel):
+    slug: str
+    title: str
+    metadata: Optional[Dict]
+    chapters: List[ChapterInfo]
+
+class TaskStatus(BaseModel):
+    slug: str
+    status: str  # pending, downloading, completed, failed
+    progress: int
+    message: str
+    timestamp: str
+
+class DownloadRequest(BaseModel):
+    slug: str
+    chapters: Optional[str] = None # "1-10" or None (All)
+
+# --- 2. GLOBAL STATE MANAGERS ---
+
+class TaskManager:
+    """
+    Arka planda çalışan indirmeleri takip eder ve API'ye sunar.
+    Flutter uygulaması burayı 'poll' ederek progress bar çizecek.
+    """
+    def __init__(self):
+        self.active_tasks: Dict[str, dict] = {}
+    
+    def update(self, slug, status, progress=0, message=""):
+        self.active_tasks[slug] = {
+            "slug": slug,
+            "status": status,
+            "progress": progress,
+            "message": message,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def get(self, slug):
+        return self.active_tasks.get(slug)
+    
+    def get_all(self):
+        return list(self.active_tasks.values())
+
+task_manager = TaskManager()
+
+# --- 3. LIFESPAN & APP SETUP ---
+
+# Global services
+yomi_engine: Optional[YomiCore] = None
+shared_session: Optional[aiohttp.ClientSession] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Uygulama başladığında veritabanını ve oturumları açar,
+    kapandığında temizler. Memory leak önler.
+    """
+    global yomi_engine, shared_session
+    
+    # Init Engine
+    yomi_engine = YomiCore(output_dir="downloads", workers=8)
+    # Init Shared Session (Tek bir havuz)
+    connector = aiohttp.TCPConnector(limit=100)
+    shared_session = aiohttp.ClientSession(connector=connector)
+    
+    print("✅ Yomi API v0.1.1 Services Started")
+    yield
+    
+    # Cleanup
+    if shared_session: await shared_session.close()
+    if yomi_engine and yomi_engine.db: yomi_engine.db.close()
+    print("🛑 Services Stopped")
+
 app = FastAPI(
-    title="Yomi API Service",
-    description="Backend Bridge for Yomi Manga Engine",
-    version="0.1.1"
+    title="Yomi Core API",
+    version="0.1.1",
+    description="Backend for YomiApp (Flutter)",
+    lifespan=lifespan
 )
 
-# Enable CORS for Flutter/Web integration
+# CORS: Flutter (Mobil/Web) erişimi için açık kapı
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,123 +115,131 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Core Services
-yomi = YomiCore(output_dir="downloads", workers=8)
-anilist = AniListProvider()
+# --- 4. ENDPOINTS ---
 
-# Global state to track background downloads
-download_registry: Dict[str, dict] = {}
-
-@app.get("/")
-async def root():
-    """Service Health Check"""
+@app.get("/", tags=["System"])
+async def health_check():
     return {
-        "status": "active",
-        "engine": "Yomi-Core",
-        "database_version": "v1.2",
-        "total_supported_sites": len(yomi.sites_config)
+        "status": "online",
+        "version": "0.1.1",
+        "core_engine": "Yomi-Hybrid",
+        "active_downloads": len(task_manager.get_all())
     }
 
-@app.get("/search")
-async def search_manga(q: str = Query(..., min_length=2)):
-    """Search for manga using fuzzy scoring algorithm"""
+@app.get("/search", response_model=List[SearchResult], tags=["Discovery"])
+async def search(q: str = Query(..., min_length=2)):
+    """Fuzzy search algoritması ile manga arar."""
+    # YomiCore içindeki mevcut search mantığını kullanır
+    # Ancak burada logic tekrarı yapmamak için YomiCore'a bir 'search_only' metodu eklenebilir
+    # Şimdilik mevcut mantığı buraya taşıyoruz:
+    
     query = q.lower().strip()
     matches = []
     
-    for key, data in yomi.sites_config.items():
-        name = data.get('name', '').lower()
-        # Hybrid scoring: Sequence similarity + Substring match
+    from difflib import SequenceMatcher
+    
+    for key, data in yomi_engine.sites_config.items():
+        name = data.get('name', key).lower()
         score = SequenceMatcher(None, query, key).ratio() * 100
-        if query in key or query in name: 
-            score += 25  # Relevance boost
+        if query in key or query in name: score += 25
         
         if score > 40:
             matches.append({
                 "slug": key,
-                "name": data.get('name', key),
-                "confidence": min(int(score), 100),
-                "base_domain": data.get('base_domain')
+                "name": data.get('name', key.title()),
+                "confidence": int(min(score, 100)),
+                "base_domain": data.get('base_domain', 'unknown')
             })
-    
-    # Sort by highest confidence first
-    results = sorted(matches, key=lambda x: x['confidence'], reverse=True)
-    return {"query": q, "results": results[:15]}
+            
+    return sorted(matches, key=lambda x: x['confidence'], reverse=True)[:20]
 
-@app.get("/manga/details")
-async def get_details(slug: str):
-    """Fetch chapters and external metadata (AniList)"""
-    url = await yomi._resolve_target(slug)
+@app.get("/manga/{slug}", response_model=MangaDetails, tags=["Discovery"])
+async def get_manga_details(slug: str):
+    """Bölümleri ve Anilist detaylarını getirir."""
+    # 1. URL Çözümle
+    url = await yomi_engine._resolve_target(slug)
     if not url:
-        raise HTTPException(status_code=404, detail="Manga slug not found")
+        raise HTTPException(status_code=404, detail="Manga not found in local DB")
 
-    async with aiohttp.ClientSession() as session:
-        extractor = AsyncGenericMangaExtractor(session)
-        # Fetch chapter list from mirror
-        chapters = await extractor.get_chapters(url)
-        # Fetch metadata from AniList based on title
-        manga_info = await extractor.get_manga_info(url)
-        metadata = await anilist.fetch_metadata(manga_info['title'])
+    # 2. Bölümleri ve Metadatayı Çek (Session paylaşarak)
+    from .extractors.common import AsyncGenericMangaExtractor
+    extractor = AsyncGenericMangaExtractor(shared_session)
+    
+    try:
+        # Paralel istek atalım (Hız için)
+        chapters_task = extractor.get_chapters(url)
+        info_task = extractor.get_manga_info(url)
+        
+        chapters, info = await asyncio.gather(chapters_task, info_task)
+        
+        # 3. İndirilmişleri İşaretle
+        # DB'den inmiş bölümleri çekip karşılaştıralım
+        downloaded_titles = yomi_engine.db.get_manga_chapters(slug)
+        # Basit bir set ile O(1) kontrol
+        # Not: Başlık normalizasyonu gerekebilir, şimdilik direct match
+        
+        final_chapters = []
+        for ch in chapters:
+            is_down = yomi_engine.db.is_completed(info['title'], ch['title'])
+            final_chapters.append({
+                "title": ch['title'],
+                "url": ch['url'],
+                "is_downloaded": is_down
+            })
+
+        # 4. Anilist (Opsiyonel)
+        meta = await yomi_engine.anilist.fetch_metadata(info['title'])
         
         return {
             "slug": slug,
-            "title": manga_info['title'],
-            "source_url": url,
-            "metadata": metadata,
-            "chapters": chapters
+            "title": info['title'],
+            "metadata": meta,
+            "chapters": final_chapters
         }
 
-@app.post("/download/start")
-async def start_task(slug: str, chapters: Optional[str] = None, background_tasks: BackgroundTasks = None):
-    """Trigger a download task in the background"""
-    if slug in download_registry and download_registry[slug]['status'] == "processing":
-        return {"status": "error", "message": "Task already in progress"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    download_registry[slug] = {
-        "status": "processing",
-        "requested_range": chapters or "all",
-        "timestamp": datetime.now().isoformat()
-    }
-
-    def execute():
-        try:
-            yomi.download_manga(slug, chapters)
-            download_registry[slug]['status'] = "completed"
-        except Exception as e:
-            download_registry[slug]['status'] = f"failed: {str(e)}"
-
-    background_tasks.add_task(execute)
-    return {"status": "queued", "slug": slug}
-
-@app.get("/download/tasks")
-async def monitor_tasks():
-    """Monitor active and finished background tasks"""
-    return download_registry
-
-@app.get("/library")
-async def list_library():
-    """Scan local storage for downloaded content"""
-    if not os.path.exists(yomi.output_dir):
-        return {"items": []}
+@app.post("/download", tags=["Action"])
+async def start_download(req: DownloadRequest, background_tasks: BackgroundTasks):
+    """İndirme işlemini arka plana atar."""
     
-    local_content = []
-    for folder in os.listdir(yomi.output_dir):
-        folder_path = os.path.join(yomi.output_dir, folder)
-        if os.path.isdir(folder_path):
-            files = os.listdir(folder_path)
-            local_content.append({
-                "manga_name": folder,
-                "chapter_count": len(files),
-                "path": os.path.abspath(folder_path)
-            })
-    return {"library": local_content}
+    # Zaten iniyorsa engelle
+    if task_manager.get(req.slug) and task_manager.get(req.slug)['status'] in ['pending', 'downloading']:
+         return {"status": "ignored", "message": "Already in queue"}
 
-def start_api():
-    """Start the Uvicorn ASGI server"""
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    task_manager.update(req.slug, "pending", 0, "Queued")
+    
+    # Background Task Wrapper
+    background_tasks.add_task(run_download_process, req.slug, req.chapters)
+    
+    return {"status": "queued", "slug": req.slug}
 
+async def run_download_process(slug: str, chapters: str):
+    """
+    Bu fonksiyon thread-blocking işlemleri yönetir ve durumu günceller.
+    Normalde YomiCore senkron çalışıyorsa 'to_thread' kullanılmalı.
+    """
+    task_manager.update(slug, "downloading", 0, "Initializing...")
+    try:
+        # Not: YomiCore.download_manga şu an async değilse, asenkron wrapper lazım.
+        # Senin core.py'de download_manga bir wrapper methoddu, asıl iş _download_manga_async'deydi.
+        # Doğrudan async metodu çağırmak daha iyi.
+        
+        await yomi_engine._download_manga_async(slug, chapters)
+        
+        # Başarılı
+        task_manager.update(slug, "completed", 100, "Finished")
+    except Exception as e:
+        task_manager.update(slug, "failed", 0, str(e))
+        logging.error(f"Download Task Failed: {e}")
 
+@app.get("/queue", response_model=List[TaskStatus], tags=["Action"])
+async def get_queue():
+    """Aktif indirmelerin durumunu döndürür."""
+    return task_manager.get_all()
 
-
-
-if __name__ == "__main__":
-    run_server()
+@app.get("/library", tags=["Library"])
+async def get_library():
+    """İndirilmiş arşiv."""
+    return yomi_engine.db.get_library()

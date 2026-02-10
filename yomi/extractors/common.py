@@ -36,6 +36,7 @@ class AsyncGenericMangaExtractor:
     async def get_manga_info(self, url: str) -> Dict[str, str]:
         """
         Extracts basic manga information (Title) from the page.
+        Includes Advanced SEO Cleaning to fix AniList matching errors.
         """
         try:
             soup, _ = await self.get_soup(url)
@@ -44,18 +45,42 @@ class AsyncGenericMangaExtractor:
             title_tag = (
                 soup.select_one("h1") or 
                 soup.select_one(".story-info-right h1") or 
-                soup.select_one(".post-title h1")
+                soup.select_one(".post-title h1") or
+                soup.select_one("#chapter-heading")
             )
             
-            title = title_tag.text.strip() if title_tag else "Unknown Manga"
+            if title_tag:
+                raw_title = title_tag.text.strip()
+            else:
+                # Fallback: URL'den slug al ve temizle
+                raw_title = url.split("/")[-1].replace("-", " ").title()
+
+            # --- ADVANCED CLEANING (SEO Çöpü Temizliği) ---
+            # 1. Parantez içindekileri sil (örn: "One Piece (Official)")
+            clean_title = re.sub(r'\s*\(.*?\)', '', raw_title)
             
-            # Clean up title (remove 'Manga' suffix if present)
-            title = re.sub(r'(?i)\s+manga$', '', title)
+            # 2. Yaygın SEO kelimelerini sil (Case insensitive)
+            seo_junk = [
+                r'(?i)\s+manga\s+online', r'(?i)\s+manga\s+read', 
+                r'(?i)\s+read\s+online', r'(?i)\s+free\s+online',
+                r'(?i)\s+english', r'(?i)\s+chapter.*', 
+                r'(?i)\s+manga$', r'(?i)\s+manhwa$', r'(?i)\s+manhua$',
+                r'(?i)\s+online$', r'(?i)\s+read$'
+            ]
             
-            return {"title": title, "url": url}
+            for junk in seo_junk:
+                clean_title = re.sub(junk, '', clean_title)
+            
+            clean_title = clean_title.strip()
+            
+            # Eğer temizlik sonucu boş kaldıysa (örn: başlık sadece "Manga" ise) orjinale dön
+            if not clean_title or len(clean_title) < 2:
+                clean_title = raw_title
+
+            return {"title": clean_title, "url": url}
+
         except Exception as e:
             logger.error(f"Failed to extract manga info: {e}")
-            # Fallback: Extract from URL
             slug = url.split("/")[-1].replace("-", " ").title()
             return {"title": slug, "url": url}
 
